@@ -19,26 +19,25 @@
 6. [How Git Uses SHA-1 for Commit History](#how-git-uses-sha-1-for-commit-history)
 7. [SHA-1 Collision Resistance in Git](#sha-1-collision-resistance-in-git)
 8. [Summary: Why Git is a Content Manager](#summary-why-git-is-a-content-manager)
-9. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
-10. [git hash-object: A Low-Level Command](#git-hash-object-a-low-level-command)
+9. [git hash-object: A Low-Level Command](#git-hash-object-a-low-level-command)
     - [Understanding `git hash-object`](#understanding-git-hash-object)
     - [Example 1: Running `hash-object` Outside a Git Repository](#example-1-running-hash-object-outside-a-git-repository)
     - [Example 2: Running `hash-object` Inside a Git Repository](#example-2-running-hash-object-inside-a-git-repository)
-11. [Understanding the `.git` Directory Structure](#understanding-the-git-directory-structure)
+10. [Understanding the `.git` Directory Structure](#understanding-the-git-directory-structure)
     - [Tree Structure of a Freshly Initialized Git Repository](#tree-structure-of-a-freshly-initialized-git-repository)
     - [Detailed Breakdown of `.git` Subdirectories](#detailed-breakdown-of-git-subdirectories)
-12. [The Importance of the `objects/` Directory](#the-importance-of-the-objects-directory)
+11. [The Importance of the `objects/` Directory](#the-importance-of-the-objects-directory)
     - [Structure of `.git/objects/`](#structure-of-gitobjects)
     - [Types of Objects Stored in `objects/`](#types-of-objects-stored-in-objects)
     - [Example: Storing and Retrieving a File Manually](#example-storing-and-retrieving-a-file-manually)
-13. [How Git Ensures Data Integrity](#how-git-ensures-data-integrity)
+12. [How Git Ensures Data Integrity](#how-git-ensures-data-integrity)
     - [Mechanisms Ensuring Data Integrity](#mechanisms-ensuring-data-integrity)
     - [Example: Checking an Object's Type](#example-checking-an-objects-type)
-14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
+13. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
-15. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+14. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
 
@@ -120,6 +119,12 @@ Git ensures data integrity using SHA-1 hashing, immutability, and object compres
 - Git **compresses objects** and stores differences (deltas) rather than full copies.
 - `git gc` (garbage collection) optimizes this process for large repositories.
 
+### Verifying Repository Integrity
+ ```bash
+ git fsck --full
+ ```
+- Detects missing objects or corruption.
+
 ---
 
 ## Git’s Plumbing vs. Porcelain Commands
@@ -183,22 +188,17 @@ committer John Doe <johndoe@example.com>
 
 ---
 
-## Key Takeaways for Software Engineers
-- **Git is a key-value store**, where SHA-1 hashes are used as unique identifiers.
-- **File contents and filenames are stored separately**, allowing efficient tracking.
-- **Git avoids duplicate storage** by reusing content if it already exists.
-- **Git’s commit structure ensures immutability**, making it reliable for version control.
-- **Understanding SHA-1 hashing helps in debugging and optimizing Git workflows.**
-
---
-
-
----
-
 ## git hash-object: A Low-Level Command
 
 ### Understanding `git hash-object`
 Git's `hash-object` command computes a **SHA-1 hash** for given content, allowing it to be stored in Git’s object database. It is a **plumbing command**, meaning it operates at a low level and does not track files.
+
+### Key Properties:
+- **Can be used outside of a Git repository.**
+- **Idempotent:** Given the same input, it will always return the same SHA-1 hash.
+- Supports **writing data to Git’s object store** (`-w` flag).
+- Stores objects in compressed format (`zlib`).
+
 
 ### Example 1: Running `hash-object` Outside a Git Repository
 ```bash
@@ -211,14 +211,33 @@ Output:
 - This command generates a **SHA-1 hash** but does **not store** it.
 
 ### Example 2: Running `hash-object` Inside a Git Repository
-```bash
-echo "Hello Git" | git hash-object -w --stdin
-```
-Output:
-```
-8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
-```
-- This command **stores the content** in `.git/objects/` and assigns a SHA-1 hash.
+
+- **Initialize a Git repository**
+
+    ```bash
+    mkdir my-repo && cd my-repo
+    git init
+    ```
+- **Generate and store an object in `.git/objects`**:
+
+    ```bash
+    echo "Hello Git" | git hash-object -w --stdin
+    ```
+    Output:
+    ```
+    8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
+    ```
+- **Locate the stored object:**
+
+    ```bash
+    ls .git/objects/e6/
+    ```
+    Output:
+    ```
+    9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+    ```
+
+- **This command **stores the content** in `.git/objects/` and assigns a SHA-1 hash.**
 
 ---
 
@@ -230,10 +249,15 @@ When a Git repository is initialized (git init), a .git directory is created to 
 ```
 .git
 ├── HEAD
+├── branches
 ├── config
 ├── description
 ├── index
 ├── hooks/
+│   ├── pre-commit.sample
+│   ├── pre-push.sample
+│   ├── post-update.sample
+│   └── (other hook samples)
 ├── info/
 │   ├── exclude
 ├── objects/
@@ -267,25 +291,37 @@ The `objects/` folder is the heart of Git’s key-value store, containing all hi
 .git/objects
 ├── info
 ├── pack
-└── (hashed objects)
+└── (hashed objects, e.g., 2e/a1f2b3c4d5e6…)
 ```
 
 ### Types of Objects Stored in `objects/`
+Git stores four object types, all identified by SHA-1 hashes:
+
+
 | Object Type | Description |
 |-------------|------------|
-| **Blob** | Stores file contents. |
-| **Tree** | Represents a directory structure. |
-| **Commit** | Points to a tree and includes metadata. |
-| **Tag** | Stores tag information. |
+| **Blob** | Stores file contents without metadata (not filenames). |
+| **Tree** | Represents a directory structure (contains pointers to blobs and trees). |
+| **Commit** | Points to a tree object and includes metadata (author, message, parent commit, etc.). |
+| **Tag** | Stores tag data and references commits (annotated tags).|
 
 ### Example: Storing and Retrieving a File Manually
 ```bash
 echo "Hello Git Internals!" | git hash-object -w --stdin
 ```
+Output:
+```bash
+8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
+```
+Now, retrieve the content:
+
 ```bash
 git cat-file -p <hash>
 ```
-
+Output:
+```bash
+Hello, Git Internals!
+```
 ---
 
 ## How Git Ensures Data Integrity
@@ -348,9 +384,14 @@ d2f3a5e4b6c2a1e7d8c9b0e2f3a7c6d5e4b3a2e1
 
 ## Key Takeaways for Software Engineers
 - **Git is a key-value store**, where SHA-1 hashes uniquely identify objects.
-- **Objects are immutable**, ensuring data integrity.
 - **Git’s internal model is based on blobs, trees, commits, and tags**.
-- **Git avoids duplicate storage** through content deduplication.
+- **Objects are immutable**, ensuring data integrity. The `objects/` directory contains Git’s entire history, structured as blobs, trees, commits, and tags.
+- **Git plumbing commands (`hash-object`, `cat-file`, `write-tree`, etc.) reveal how Git operates internally.**
 - **Understanding Git internals enables debugging, optimization, and advanced workflows.**
+- **File contents and filenames are stored separately**, allowing efficient tracking.
+- **Git avoids duplicate storage** by reusing content if it already exists.
+- **Git’s commit structure ensures immutability**, making it reliable for version control.
+- **Understanding SHA-1 hashing helps in debugging and optimizing Git workflows.**
 
-By exploring Git at this level, engineers can gain a deep understanding of **how Git manages data and ensures efficiency**. 🚀
+---
+
