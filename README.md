@@ -30,14 +30,11 @@
     - [Structure of `.git/objects/`](#structure-of-gitobjects)
     - [Types of Objects Stored in `objects/`](#types-of-objects-stored-in-objects)
     - [Example: Storing and Retrieving a File Manually](#example-storing-and-retrieving-a-file-manually)
-12. [How Git Ensures Data Integrity](#how-git-ensures-data-integrity)
-    - [Mechanisms Ensuring Data Integrity](#mechanisms-ensuring-data-integrity)
-    - [Example: Checking an Object's Type](#example-checking-an-objects-type)
-13. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
+12. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
-14. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+13. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
 
@@ -59,7 +56,7 @@ Git assigns a **SHA-1 (Secure Hash Algorithm 1) hash** to every object it stores
 echo "Hello World" | git hash-object --stdin
 ```
 Output:
-```
+```nginx
 557db03de997c86a4a028e1ebd3a1ceb225be238
 ```
 - The `git hash-object` command computes the SHA-1 hash of "Hello World", ensuring idempotency—this command will always produce the same hash for the same input.
@@ -88,7 +85,7 @@ Git stores content as objects in the `.git/objects/` directory. These objects ar
 echo "Hello World" | git hash-object -w --stdin
 ```
 Output:
-```
+```nginx
 557db03de997c86a4a028e1ebd3a1ceb225be238
 ```
 - This command **stores** "Hello World" inside `.git/objects/` and assigns it a **SHA-1 hash**. The `-w` flag writes the object into Git’s object database.
@@ -109,21 +106,32 @@ Hello World
 ---
 
 ## How Git Ensures Data Integrity
-Git ensures data integrity using SHA-1 hashing, immutability, and object compression.
+Git ensures data integrity using SHA-1 hashing, immutability, object compression, and content deduplication.
 
-### Immutability with SHA-1
-- Once an object is stored, it **cannot be modified** without changing its SHA-1.
-- This prevents accidental overwrites or corruption.
+### Mechanisms Ensuring Data Integrity
+- **SHA-1 hashing** guarantees uniqueness.
+  - Every object in Git is identified by a 160-bit SHA-1 hash.
+  - Any modification to an object results in a completely new hash.
+  - This prevents accidental overwrites or corruption.
+- **Delta compression** reduces redundancy.
+  - Git compresses objects and stores differences (deltas) rather than full copies.
+  - `git gc` (garbage collection) optimizes this process for large repositories.
+- **Git’s immutable data model** prevents accidental corruption.
+- **Verifying Repository Integrity** prevents accidental corruption.
+  - Detects missing objects or corruption.
+    ```bash
+    git fsck --full
+    ```
 
-### Efficient Storage with Delta Compression
-- Git **compresses objects** and stores differences (deltas) rather than full copies.
-- `git gc` (garbage collection) optimizes this process for large repositories.
+### Example: Checking an Object's Type
+```bash
+git cat-file -t <hash>
+```
+### Output:
 
-### Verifying Repository Integrity
- ```bash
- git fsck --full
- ```
-- Detects missing objects or corruption.
+```nginx
+blob
+```
 
 ---
 
@@ -205,7 +213,7 @@ Git's `hash-object` command computes a **SHA-1 hash** for given content, allowin
 echo "Hello Git" | git hash-object --stdin
 ```
 Output:
-```
+```nginx
 8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
 ```
 - This command generates a **SHA-1 hash** but does **not store** it.
@@ -224,7 +232,7 @@ Output:
     echo "Hello Git" | git hash-object -w --stdin
     ```
     Output:
-    ```
+    ```nginx
     8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
     ```
 - **Locate the stored object:**
@@ -233,7 +241,7 @@ Output:
     ls .git/objects/e6/
     ```
     Output:
-    ```
+    ```nginx
     9de29bb2d1d6434b8b29ae775ad8c2e48c5391
     ```
 
@@ -310,7 +318,7 @@ Git stores four object types, all identified by SHA-1 hashes:
 echo "Hello Git Internals!" | git hash-object -w --stdin
 ```
 Output:
-```bash
+```nginx
 8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
 ```
 Now, retrieve the content:
@@ -319,44 +327,20 @@ Now, retrieve the content:
 git cat-file -p <hash>
 ```
 Output:
-```bash
+```nginx
 Hello, Git Internals!
 ```
----
-
-## How Git Ensures Data Integrity
-
-Git’s reliance on SHA-1 hashes provides integrity, immutability, and content deduplication.
-
-### Mechanisms Ensuring Data Integrity
-- **SHA-1 hashing** guarantees uniqueness.
-  - Every object in Git is identified by a 160-bit SHA-1 hash.
-  - Any modification to an object results in a completely new hash.
-- **Delta compression** reduces redundancy.
-  - Git compresses objects to optimize space (e.g., `git gc`).
-- **Git’s immutable data model** prevents accidental corruption.
-- **Verifying Repository Integrity** prevents accidental corruption.
-    ```bash
-    git fsck --full
-    ```
-  - Detects missing objects or corruption.
-
-### Example: Checking an Object's Type
-```bash
-git cat-file -t <hash>
-```
-
 ---
 
 ## Advanced Git Internals: Reconstructing a Commit
 
 ### Step 1: Write a Blob (File Content)
 ```bash
-echo "My first file" | git hash-object -w --stdin
+ echo "My first file" | git hash-object -w --stdin
 ```
 Output:
-```
-b173a9e4f6222fa923abc3ee10d4e7a2f4e4a16e
+```nginx
+ b173a9e4f6222fa923abc3ee10d4e7a2f4e4a16e
 ```
 
 ### Step 2: Write a Tree Object
@@ -364,19 +348,19 @@ b173a9e4f6222fa923abc3ee10d4e7a2f4e4a16e
 git write-tree
 ```
 Output:
-```
-9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6
+```nginx
+ 9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6
 ```
 
 * The tree object represents a directory structure and references blob objects.
 
 ### Step 3: Create a Commit
 ```bash
-echo "Initial commit" | git commit-tree 9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6 -m "Initial commit"
+ echo "Initial commit" | git commit-tree 9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6 -m "Initial commit"
 ```
 Output:
-```
-d2f3a5e4b6c2a1e7d8c9b0e2f3a7c6d5e4b3a2e1
+```nginx
+ d2f3a5e4b6c2a1e7d8c9b0e2f3a7c6d5e4b3a2e1
 ```
 * This manually creates a commit object!
 
