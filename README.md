@@ -76,9 +76,23 @@ Output:
 - This command **stores** "Hello World" inside `.git/objects/` and assigns it a **SHA-1 hash**. The `-w` flag writes the object into Git’s object database.
 - The blob **does not track filenames**, only raw content. The object is now stored inside `.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238`.
 
+### To retrieve the content, use:
+
+```bash
+git cat-file -p 557db03de997c86a4a028e1ebd3a1ceb225be238
+```
+
+### Output:
+
+```nginx
+Hello World
+```
+
 ---
 
 ## How Git Ensures Data Integrity
+Git ensures data integrity using SHA-1 hashing, immutability, and object compression.
+
 ### Immutability with SHA-1
 - Once an object is stored, it **cannot be modified** without changing its SHA-1.
 - This prevents accidental overwrites or corruption.
@@ -98,18 +112,21 @@ Git provides **two levels of commands**:
 | `git hash-object` | Computes and writes SHA-1 hash for content. |
 | `git cat-file` | Displays object content by SHA-1 hash. |
 | `git rev-parse` | Retrieves commit hashes and refs. |
+| `git update-index` | Stages files manually into Git’s index. |
+| `git write-tree` | Creates a tree object from the index. |
 
 ### Porcelain Commands (High-Level)
 | Command | Description |
 |---------|-------------|
 | `git commit` | Creates a commit object with metadata. |
 | `git add` | Stages files. |
+| `git status` | Displays working directory status. |
 | `git checkout` | Switches branches or restores files. |
 
 ---
 
 ## How Git Uses SHA-1 for Commit History
-A **Git commit** is essentially a SHA-1 hash that represents the project state at a specific time.
+A **Git commit** is essentially a SHA-1 hash that represents the project state at a specific time. The commit includes a tree (file structure), parent commit(s), and metadata.
 
 Example:
 ```bash
@@ -131,15 +148,19 @@ committer John Doe <johndoe@example.com>
 
 ## SHA-1 Collision Resistance in Git
 - **Git uses additional security mechanisms** to detect hash collisions.
-- Git has moved towards **SHA-256 support** to further enhance security.
+- Git has moved towards **SHA-256 support** to further enhance security. Git now supports SHA-256 hashes (`git init --object-format=sha256`).
 - `git fsck` ensures object integrity.
+-  **Git content structure**: Even if a SHA-1 collision were found, Git’s reliance on tree structures and commit history prevents serious exploits.
 
 ---
 
 ## Summary: Why Git is a Content Manager
-- **Git stores and retrieves data based on SHA-1 hashes.**
+- **Git stores and retrieves data based on SHA-1 hashes**,  acting as a key-value content store.
 - **Content-addressable storage** ensures deduplication and efficiency.
+- **Plumbing commands** allow direct interaction with the object storage.
 - **Git’s object model (blobs, trees, commits, tags) enables version tracking.**
+- **Commit history is a chain of hashes**, creating an immutable ledger of project changes.
+
 
 ---
 
@@ -149,5 +170,4 @@ committer John Doe <johndoe@example.com>
 - **Git avoids duplicate storage** by reusing content if it already exists.
 - **Git’s commit structure ensures immutability**, making it reliable for version control.
 - **Understanding SHA-1 hashing helps in debugging and optimizing Git workflows.**
-
-By mastering **Git internals**, developers can optimize workflows, detect corruption, and leverage Git’s full power for scalable software development. 🚀
+**
