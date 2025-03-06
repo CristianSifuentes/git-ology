@@ -11,8 +11,8 @@
    - [Four Types of Objects in Git](#four-types-of-objects-in-git)
    - [Example: Storing a Blob in Git](#example-storing-a-blob-in-git)
 4. [How Git Ensures Data Integrity](#how-git-ensures-data-integrity)
-   - [Immutability with SHA-1](#immutability-with-sha-1)
-   - [Efficient Storage with Delta Compression](#efficient-storage-with-delta-compression)
+   - [Mechanisms Ensuring Data Integrity](#mechanisms-ensuring-data-integrity)
+   - [Example: Checking an Object's Type](#example-checking-an-objects-type)
 5. [Git’s Plumbing vs. Porcelain Commands](#gits-plumbing-vs-porcelain-commands)
    - [Plumbing Commands (Low-Level)](#plumbing-commands-low-level)
    - [Porcelain Commands (High-Level)](#porcelain-commands-high-level)
@@ -29,13 +29,21 @@
 11. [The Importance of the `objects/` Directory](#the-importance-of-the-objects-directory)
     - [Structure of `.git/objects/`](#structure-of-gitobjects)
     - [Understanding the `.git/objects` Directory](#understanding-the-gitobjects-directory)
+       - [How Git Stores Objects Efficiently](#how-git-stores-objects-efficiently)
+       - [Why This Structure?](#why-this-structure)
     - [Types of Objects Stored in `objects/`](#types-of-objects-stored-in-objects)
     - [Example: Storing and Retrieving a File Manually](#example-storing-and-retrieving-a-file-manually)
-12. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
+    - [Retrieving Stored Objects (`cat-file`)](#retrieving-stored-objects-cat-file)
+       - [Key Insights on Shortened Hashes](#key-insights-on-shortened-hashes)
+12. [Advanced Insights: What Happens Internally?](#advanced-insights-what-happens-internally)
+    - [Compression and Storage](#compression-and-storage)
+    - [Object Format in Git](#object-format-in-git)
+14. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
+15. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
-13. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+16. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
 
@@ -344,6 +352,81 @@ Output:
 ```nginx
 Hello, Git Internals!
 ```
+---
+## Retrieving Stored Objects (`cat-file`)
+Since the object is now in  `.git/objects/`, we can inspect its content using:
+
+```bash
+git cat-file -p 557db03de997c86a4a028e1ebd3a1ceb225be238
+```
+Output:
+```nginx
+Hello World
+```
+Git allows us to reference objects with shortened hashes, provided they are unique in the repository:
+
+```bash
+git cat-file -p 557db03
+```
+Output:
+```nginx
+Hello World
+```
+
+### Key Insights on Shortened Hashes
+- Git allows **shortened hashes** as long as they are unique.
+- Minimum **6–7 characters** are usually enough.
+
+---
+
+## Advanced Insights: What Happens Internally?
+### Compression and Storage
+- Objects are **compressed** using **Zlib** before storage.
+- Git **stores only differences (deltas)** when optimizing storage.
+- Running the following command retrieves **raw binary data:**
+    ```bash
+    zcat .git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238
+    ```
+    * This is why `.git/objects` files **cannot be read directly** in a text editor.
+
+
+### Object Format in Git
+A stored object follows the format:
+```
+<type> <size>\0<content>
+```
+For `"Hello World"`:
+```
+blob 11\0Hello World
+```
+
+
+* `blob` → Object type.
+* `11` → Number of bytes in `"Hello World"`.
+* `\0` → Null separator before content.
+
+---
+
+## Visualizing Git's Object Storage
+Using **`ls`**, we can see how objects are structured:
+```bash
+ls -R .git/objects/
+```
+Example output:
+```
+.git
+├── HEAD  (Pointer to the current branch)
+├── objects
+│   ├── 55
+│   │   └── 7db03de997c86a4a028e1ebd3a1ceb225be238 (Stored Blob)
+│   ├── info
+│   └── pack
+├── refs
+│   ├── heads
+│   └── tags
+
+```
+
 ---
 
 ## Advanced Git Internals: Reconstructing a Commit
