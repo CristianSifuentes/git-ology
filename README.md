@@ -28,6 +28,7 @@
     - [Detailed Breakdown of `.git` Subdirectories](#detailed-breakdown-of-git-subdirectories)
 11. [The Importance of the `objects/` Directory](#the-importance-of-the-objects-directory)
     - [Structure of `.git/objects/`](#structure-of-gitobjects)
+    - [Understanding the `.git/objects` Directory](#understanding-the-gitobjects-directory)
     - [Types of Objects Stored in `objects/`](#types-of-objects-stored-in-objects)
     - [Example: Storing and Retrieving a File Manually](#example-storing-and-retrieving-a-file-manually)
 12. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
@@ -301,6 +302,19 @@ The `objects/` folder is the heart of Git’s key-value store, containing all hi
 ├── pack
 └── (hashed objects, e.g., 2e/a1f2b3c4d5e6…)
 ```
+
+## Understanding the `.git/objects` Directory
+
+### How Git Stores Objects Efficiently
+- The SHA-1 hash is split into:
+  - **First two characters** → Directory name `(55)`.
+  - **Remaining 38 characters** → File name `(7db03de997c86a4a028e1ebd3a1ceb225be238)`.
+- This prevents **large numbers of files in a single directory**.
+
+### Why This Structure?
+  - **Speeds up lookups:** By reducing the number of files per directory.
+  - **Ensures unique content:** The same content always produces the same hash, preventing duplicate storage.
+  - **Supports distributed versioning:** Each object is self-contained and immutable.
 
 ### Types of Objects Stored in `objects/`
 Git stores four object types, all identified by SHA-1 hashes:
