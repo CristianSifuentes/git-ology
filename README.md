@@ -38,12 +38,12 @@
 12. [Advanced Insights: What Happens Internally?](#advanced-insights-what-happens-internally)
     - [Compression and Storage](#compression-and-storage)
     - [Object Format in Git](#object-format-in-git)
-14. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
-15. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
+13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
+14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
-16. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+15. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
 
