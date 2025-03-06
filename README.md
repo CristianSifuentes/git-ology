@@ -43,6 +43,7 @@
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
+    - [Step 4: Move `HEAD` to the Commit](#step-4-move-head-to-the-commit)
 15. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
@@ -442,7 +443,9 @@ Output:
 
 ### Step 2: Write a Tree Object
 ```bash
+git update-index --add --cacheinfo 100644 557db03de997c86a4a028e1ebd3a1ceb225be238 hello.txt
 git write-tree
+
 ```
 Output:
 ```nginx
@@ -461,16 +464,30 @@ Output:
 ```
 * This manually creates a commit object!
 
+
+### Step 4: Move `HEAD` to the Commit
+```bash
+git branch -f main d1ee121
+git checkout main
+```
+* Now the repository **has a valid commit history!*.*
+
+
+
 ---
 
 ## Key Takeaways for Software Engineers
 - **Git is a key-value store**, where SHA-1 hashes uniquely identify objects.
 - **Git’s internal model is based on blobs, trees, commits, and tags**.
 - **Objects are immutable**, ensuring data integrity. The `objects/` directory contains Git’s entire history, structured as blobs, trees, commits, and tags.
+- **Blobs do not track filenames**, only raw content. Filenames are managed via tree objects.
+- **Commit history is built on top of objects,** linking blobs → trees → commits.
 - **Git plumbing commands (`hash-object`, `cat-file`, `write-tree`, etc.) reveal how Git operates internally.**
+- **Shortened hashes can be used**, provided they remain unique.
 - **Understanding Git internals enables debugging, optimization, and advanced workflows.**
 - **File contents and filenames are stored separately**, allowing efficient tracking.
 - **Git avoids duplicate storage** by reusing content if it already exists.
+- **Git avoids data duplication** by using content-addressable storage.
 - **Git’s commit structure ensures immutability**, making it reliable for version control.
 - **Understanding SHA-1 hashing helps in debugging and optimizing Git workflows.**
 
