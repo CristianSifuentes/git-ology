@@ -470,7 +470,7 @@ Output:
 git branch -f main d1ee121
 git checkout main
 ```
-* Now the repository **has a valid commit history!*.*
+* Now the repository **has a valid commit history!**
 
 
 
