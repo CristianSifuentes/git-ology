@@ -39,12 +39,18 @@
     - [Compression and Storage](#compression-and-storage)
     - [Object Format in Git](#object-format-in-git)
 13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
+<!-- 14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit) -->
 14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
     - [Step 4: Move `HEAD` to the Commit](#step-4-move-head-to-the-commit)
-15. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+15. [Retrieving and Inspecting Each Object](#retrieving-and-inspecting-each-object)
+    - [(1) Checking the Commit Object](#1-checking-the-commit-object)
+    - [(2) Examining the Tree Object](#2-examining-the-tree-object)
+    - [(3) Verifying the Blob Object](#3-verifying-the-blob-object)
+16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals)    
+17. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
 
@@ -472,9 +478,119 @@ git checkout main
 ```
 * Now the repository **has a valid commit history!**
 
+---
 
+## Understanding the First Commit in Git
+When creating a new Git repository and making the first commit, Git initializes its **object database** with a structured reference to **blobs (files), trees (directories), and commits (history).**
+
+```bash
+echo "Hello World" > hello.txt
+git add .
+git commit -m "First commit"
+```
+
+After committing, Git creates multiple objects inside `.git/objects/`, structured as follows:
+
+```
+.git/objects
+├── 55
+│   └── 7db03de997c86a4a028e1ebd3a1ceb225be238  (Blob for "Hello World")
+├── 97
+│   └── b49d4c943e3715fe30f141cc6f27a8548cee0e  (Tree containing hello.txt)
+├── d1
+│   └── ee121d5fe96b891ac0cc695498f31c0a4a7664  (Commit object)
+```
 
 ---
+
+## Retrieving and Inspecting Each Object
+
+### (1) Checking the Commit Object
+```bash
+git cat-file -t d1ee121
+```
+Output:
+```
+commit
+```
+
+```bash
+git cat-file -p d1ee121
+```
+Output:
+```
+tree 97b49d4c943e3715fe30f141cc6f27a8548cee0e
+author John Doe <johndoe@example.com> 1485111055 +0000
+committer John Doe <johndoe@example.com> 1485111055 +0000
+
+First commit
+```
+
+### (2) Examining the Tree Object
+```bash
+git cat-file -t 97b49d4
+```
+Output:
+```
+tree
+```
+
+```bash
+git cat-file -p 97b49d4
+```
+Output:
+```
+100644 blob 557db03de997c86a4a028e1ebd3a1ceb225be238 hello.txt
+```
+
+### (3) Verifying the Blob Object
+```bash
+git cat-file -t 557db03
+```
+Output:
+```
+blob
+```
+
+```bash
+git cat-file -p 557db03
+```
+Output:
+```
+Hello World
+```
+
+---
+
+## Advanced Commands for Exploring Git Internals
+
+```bash
+git ls-tree HEAD  # List tree structure
+```
+
+```bash
+git rev-parse HEAD  # Show latest commit hash
+```
+
+```bash
+git fsck --full  # Verify Git object database
+```
+
+```bash
+git log
+git log -p -2
+git log --stat
+git log --pretty=oneline
+git log --pretty=format:"%h - %an, %ar : %s"
+git log --pretty=format:"%h %s" --graph
+git log --since=2.weeks
+git log -S function_name
+git log -- path/to/file
+git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
+   --before="2008-11-01" --no-merges -- t/
+
+---
+
 
 ## Key Takeaways for Software Engineers
 - **Git is a key-value store**, where SHA-1 hashes uniquely identify objects.
