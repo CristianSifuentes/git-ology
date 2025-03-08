@@ -588,6 +588,7 @@ git log -S function_name
 git log -- path/to/file
 git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
    --before="2008-11-01" --no-merges -- t/
+```
 
 ---
 
