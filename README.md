@@ -49,7 +49,23 @@
     - [(1) Checking the Commit Object](#1-checking-the-commit-object)
     - [(2) Examining the Tree Object](#2-examining-the-tree-object)
     - [(3) Verifying the Blob Object](#3-verifying-the-blob-object)
-16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals)    
+16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
+    - [Viewing Commit History](#viewing-commit-history)
+       - [Basic Commit Log](#basic-commit-log)
+       - [Viewing Patch Details](#viewing-patch-details)
+       - [Displaying File-Level Changes](#displaying-file-level-changes)
+    - [Customizing Git Log Output](#customizing-git-log-output)
+       - [Single-Line Commit Format](#single-line-commit-format)
+       - [Custom Commit Formatting](#custom-commit-formatting)
+       - [Visualizing Commit Graphs](#visualizing-commit-graphs)
+    - [Filtering Commit History](#filtering-commit-history)
+       - [Filtering by Date](#filtering-by-date)
+       - [Searching for Specific Changes](#searching-for-specific-changes)
+       - [Filtering by File Path](#filtering-by-file-path)
+    - [Advanced Filtering & Searching](#advanced-filtering--searching)
+       - [Filtering by Author and Date](#filtering-by-author-and-date)
+       - [Excluding Merge Commits](#excluding-merge-commits)
+    - [Summary](#summary)   
 17. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
 
 ---
@@ -564,7 +580,158 @@ Hello World
 
 ## Advanced Commands for Exploring Git Internals
 
+### Viewing Commit History
+
+#### Basic Commit Log
 ```bash
+git log
+```
+* Displays commit history **with details such as author, date, and commit message.**
+
+* **Default output:**
+  ```sql
+   commit 9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
+   Author: John Doe <johndoe@example.com>
+   Date:   Mon Mar 4 10:15:32 2024 +0000
+
+      Fixed a critical bug in authentication
+
+  ```
+
+#### Viewing Patch Details
+```bash
+git log -p -2
+```
+* Shows **patch details** (actual code changes) for the last **two** commits.
+
+* **Default output:**
+  ```sql
+   commit 4a7e8d9c6a...
+   Author: Alice Smith
+   Date:   Tue Mar 5 14:20:01 2024
+
+      Refactored user authentication
+
+   diff --git a/hello.txt b/hello.txt
+   --- a/hello.txt
+   +++ b/hello.txt
+   @@ -34,7 +34,7 @@
+   -    return False
+   +    return True
+
+  ```
+
+
+#### Displaying File-Level Changes
+```bash
+git log --stat
+```
+* Displays commit history **with file-level change statistics.**
+---
+
+* **Default output:**
+  ```sql
+   commit 9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
+   Author: John Doe <johndoe@example.com>
+   Date:   Mon Mar 4 10:15:32 2024 +0000
+
+      Fixed login bug
+
+   hello.txt | 3 +--
+   hello2.txt | 2 ++
+   2 files changed, 3 insertions(+), 2 deletions(-)
+
+  ```
+
+### Customizing Git Log Output
+
+#### Single-Line Commit Format
+```bash
+git log --pretty=oneline
+```
+Displays commit history **in a compact single-line format**.
+
+#### Custom Commit Formatting
+```bash
+git log --pretty=format:"%h - %an, %ar : %s"
+```
+- `%h` → Short commit hash
+- `%an` → Author name
+- `%ar` → Relative commit date
+- `%s` → Commit message
+
+Example Output:
+```
+9b2e3d7 - John Doe, 3 days ago : Fixed login bug
+4a7e8d9 - Alice Smith, 1 week ago : Refactored authentication
+```
+
+#### Visualizing Commit Graphs
+```bash
+git log --pretty=format:"%h %s" --graph
+```
+Displays a **graph representation** of commit history.
+
+---
+
+### Filtering Commit History
+
+#### Filtering by Date
+```bash
+git log --since=2.weeks
+```
+Shows commits from the last **two weeks**.
+
+#### Searching for Specific Changes
+```bash
+git log -S function_name
+```
+Finds commits where a **specific function or string was added or removed**.
+
+#### Filtering by File Path
+```bash
+git log -- path/to/file
+```
+Shows commit history for a specific file.
+
+---
+
+### Advanced Filtering & Searching
+
+#### Filtering by Author and Date
+```bash
+git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
+   --before="2008-11-01" --no-merges -- t/
+```
+- Filters commits **by author, date range, and file path**.
+- `--no-merges` excludes merge commits.
+
+#### Excluding Merge Commits
+```bash
+git log --no-merges
+```
+Lists commits **without showing merge commits**.
+
+---
+
+### Summary
+
+| **Command** | **Description** |
+|-------------|---------------|
+| `git log` | Shows commit history. |
+| `git log -p -2` | Displays code changes for last 2 commits. |
+| `git log --stat` | Shows file-level changes per commit. |
+| `git log --pretty=oneline` | Displays commits in single-line format. |
+| `git log --pretty=format:"%h - %an, %ar : %s"` | Custom commit format with hash, author, date, and message. |
+| `git log --pretty=format:"%h %s" --graph` | Displays a visual commit graph. |
+| `git log --since=2.weeks` | Shows commits from the last 2 weeks. |
+| `git log -S function_name` | Finds commits where a specific function was added/removed. |
+| `git log -- path/to/file` | Shows commit history for a specific file. |
+| `git log --pretty="%h - %s" --author='...' --since="..." --before="..." --no-merges -- t/` | Filters commits by author, date, and file path. |
+
+---
+
+<!-- ```bash
 git ls-tree HEAD  # List tree structure
 ```
 
@@ -588,7 +755,7 @@ git log -S function_name
 git log -- path/to/file
 git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
    --before="2008-11-01" --no-merges -- t/
-```
+``` -->
 
 ---
 
