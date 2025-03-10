@@ -39,7 +39,7 @@
     - [Compression and Storage](#compression-and-storage)
     - [Object Format in Git](#object-format-in-git)
 13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
-14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
+14. [Advanced Git Internals: Reconstructing a Real Git Scenery](#advanced-git-internals-reconstructing-a-real-git-scenery)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
@@ -47,7 +47,7 @@
 15. [Retrieving and Inspecting Each Object](#retrieving-and-inspecting-each-object)
     - [(1) Checking the Commit Object](#1-checking-the-commit-object)
     - [(2) Examining the Tree Object](#2-examining-the-tree-object)
-    - [(3) Verifying the Blob Object](#3-verifying-the-blob-object)
+    <!-- - [(3) Verifying the Blob Object](#3-verifying-the-blob-object) -->
 16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
     - [Inspecting Git Tree and Commit Information](#inspecting-the-git-tree-git-ls-tree-head)
        - [Inspecting the Git Tree: `git ls-tree HEAD`](#inspecting-the-git-tree-git-ls-tree-head)
@@ -463,16 +463,121 @@ Example output:
 
 ---
 
-## Advanced Git Internals: Reconstructing a Commit
+## Advanced Git Internals: Reconstructing a Real Git Scenery
 
-### Step 1: Write a Blob (File Content)
+### Step 1: Retrieving a File Manually (Plumbing Commands)
+
 ```bash
- echo "My first file" | git hash-object -w --stdin
+echo "Hello World" | git hash-object --stdin
 ```
+* **Output:**
+   ```nginx
+   2b929a919511b881a7643785c73a74c8e59db018
+   ```
+
+* **Checking an Object's Type**
+   ```bash
+   git cat-file -t 2b929a919511b881a7643785c73a74c8e59db018
+   ```
+* **Output:**
+   ```nginx
+   blob
+   ```
+
+* **Now, retrieve the content:**
+   ```bash
+   git cat-file -p 2b929a919511b881a7643785c73a74c8e59db018
+   ```
+
+* **Output:**
+   ```nginx
+   Hello World
+   ```
+
+
+
+### Step 2: Write a Blob (File Content)
+
+```bash
+ echo "Hello World" | git hash-object -w --stdin
+```
+
+* **Output:**
+   ```nginx
+   56172c3d5042ca5ec65c34b5d1e91093ecee5648
+   ```
+
+* **Checking an Object's Type**
+   ```bash
+   git cat-file -t 56172c3d5042ca5ec65c34b5d1e91093ecee5648
+   ```
+* **Output:**
+   ```nginx
+   blob
+   ```
+
+* **Now, retrieve the content:**
+   ```bash
+   git cat-file -p 56172c3d5042ca5ec65c34b5d1e91093ecee5648
+   ```
+
+* **Output:**
+   ```nginx
+    Hello World
+   ```
+
+
+
+
+## Step 3: Understanding the First Commit in Git
+When creating a new Git repository and making the first commit, Git initializes its **object database** with a structured reference to **blobs (files), trees (directories), and commits (history).**
+
+```bash
+echo "Hello World" > hello.txt
+git add .
+git commit -m "First commit"
+
+[master (root-commit) 56172c3] First commit
+ 1 file changed, 1 insertion(+)
+ create mode 100644 hello.txt
+
+```
+
 Output:
 ```nginx
- b173a9e4f6222fa923abc3ee10d4e7a2f4e4a16e
+ 56172c3d5042ca5ec65c34b5d1e91093ecee5648
 ```
+
+
+After committing, Git creates multiple objects inside `.git/objects/`, structured as follows:
+
+```
+.git/objects
+├── 55
+│   └── 7db03de997c86a4a028e1ebd3a1ceb225be238  (Blob for "Hello World")
+├── 97
+│   └── b49d4c943e3715fe30f141cc6f27a8548cee0e  (Tree containing hello.txt)
+├── d1
+│   └── ee121d5fe96b891ac0cc695498f31c0a4a7664  (Commit object)
+```
+### Step 6: Branches
+### Step 7: Merge
+### Step 8: Recursive
+### Step 9: Rebase
+### Step 10: Conflict resolution
+
+Synchronizing with the remote repository
+
+Scenario 1
+
+Scenario 2
+
+Scenario 3: the same, but with conflicts
+
+Conclusions
+
+
+---
 
 ### Step 2: Write a Tree Object
 ```bash
@@ -507,28 +612,11 @@ git checkout main
 
 ---
 
-## Understanding the First Commit in Git
-When creating a new Git repository and making the first commit, Git initializes its **object database** with a structured reference to **blobs (files), trees (directories), and commits (history).**
 
-```bash
-echo "Hello World" > hello.txt
-git add .
-git commit -m "First commit"
-```
 
-After committing, Git creates multiple objects inside `.git/objects/`, structured as follows:
 
-```
-.git/objects
-├── 55
-│   └── 7db03de997c86a4a028e1ebd3a1ceb225be238  (Blob for "Hello World")
-├── 97
-│   └── b49d4c943e3715fe30f141cc6f27a8548cee0e  (Tree containing hello.txt)
-├── d1
-│   └── ee121d5fe96b891ac0cc695498f31c0a4a7664  (Commit object)
-```
-
----
+### Step 4: Tags
+### Step 5: Create a Second commit
 
 ## Retrieving and Inspecting Each Object
 
@@ -570,7 +658,7 @@ Output:
 100644 blob 557db03de997c86a4a028e1ebd3a1ceb225be238 hello.txt
 ```
 
-### (3) Verifying the Blob Object
+<!-- ### (3) Verifying the Blob Object
 ```bash
 git cat-file -t 557db03
 ```
@@ -585,7 +673,7 @@ git cat-file -p 557db03
 Output:
 ```
 Hello World
-```
+``` -->
 
 ---
 
