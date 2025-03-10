@@ -39,7 +39,6 @@
     - [Compression and Storage](#compression-and-storage)
     - [Object Format in Git](#object-format-in-git)
 13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
-<!-- 14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit) -->
 14. [Advanced Git Internals: Reconstructing a Commit](#advanced-git-internals-reconstructing-a-commit)
     - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
     - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
@@ -50,6 +49,18 @@
     - [(2) Examining the Tree Object](#2-examining-the-tree-object)
     - [(3) Verifying the Blob Object](#3-verifying-the-blob-object)
 16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
+    - [Inspecting Git Tree and Commit Information](#inspecting-the-git-tree-git-ls-tree-head)
+       - [Inspecting the Git Tree: `git ls-tree HEAD`](#inspecting-the-git-tree-git-ls-tree-head)
+            - [Understanding `git ls-tree`](#understanding-git-ls-tree)
+            - [Example Usage](#example-usage)
+            - [Interpreting the Output](#interpreting-the-output)
+       - [Retrieving Commit Hash: `git rev-parse HEAD`](#retrieving-commit-hash-git-rev-parse-head)
+            - [Understanding `git rev-parse`](#understanding-git-rev-parse)
+            - [Example Usage](#example-usage-1)
+       - [Verifying Repository Integrity: `git fsck --full`](#verifying-repository-integrity-git-fsck--full)
+            - [Understanding `git fsck`](#understanding-git-fsck)
+            - [Example Usage](#example-usage-2)
+       - [Conclusion](#conclusion)
     - [Viewing Commit History](#viewing-commit-history)
        - [Basic Commit Log](#basic-commit-log)
        - [Viewing Patch Details](#viewing-patch-details)
@@ -578,6 +589,92 @@ Hello World
 
 ---
 
+## Inspecting the Git Tree: `git ls-tree HEAD`
+
+### **Understanding `git ls-tree`**
+- `git ls-tree` displays **the contents of a tree object**.
+- `HEAD` refers to the **current commit**, so `git ls-tree HEAD` lists files in the latest commit.
+- The output includes:
+  - **File mode** (permissions).
+  - **Type** (`blob` for files, `tree` for directories).
+  - **SHA-1 hash** of each object.
+  - **File or directory name**.
+
+### **Example Usage**
+```bash
+git ls-tree HEAD
+```
+### **Interpreting the Output**
+Example output:
+
+```bash
+100644 blob a4c2e3e file1.txt
+100644 blob b6f9d5f file2.txt
+040000 tree 3f5e2a7 src
+
+```
+## Retrieving Commit Hash: `git rev-parse HEAD`
+
+**Understanding** `git rev-parse`
+* `git rev-parse HEAD` returns the **full commit hash** of the latest commit.
+* Useful for **scripting, automation, and debugging.**
+
+**Example Usage**
+```bash
+git rev-parse HEAD
+```
+
+**Example output:**
+
+```bash
+9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
+```
+
+This hash uniquely identifies the **latest commit** in the current branch.
+
+
+
+## Verifying Repository Integrity: `git fsck --full`
+
+**Understanding** `git fsck`
+* `git fsck` checks the **validity of Git objects.**
+* `--full` performs a **deep integrity check.**
+* Identifies **corrupt objects, missing references, or structural issues.**
+
+**Example Usage**
+
+```bash
+git fsck --full
+```
+
+
+**Example output:**
+
+```bash
+Checking object directories: 100% (256/256), done.
+Checking objects: 100% (1500/1500), done.
+```
+
+If corruption exists:
+
+```vbnet
+error: missing blob 8f00c6e4
+fatal: object 8f00c6e4 missing
+```
+
+* This indicates that an object is missing and might need **recovery from a remote repository.**
+
+
+## Conclusion
+
+These **low-level Git commands** are essential for **inspecting, debugging, and verifying repositories:**
+
+| Command | Description |
+|---------|-------------|
+| `git ls-tree HEAD` | Lists files and directories at the latest commit. |
+| `git rev-parse HEAD` | Retrieves the latest commit hash. |
+| `git fsck --full` | 	Checks repository integrity and detects corruption.|
+
 ## Advanced Commands for Exploring Git Internals
 
 ### Viewing Commit History
@@ -627,7 +724,6 @@ git log -p -2
 git log --stat
 ```
 * Displays commit history **with file-level change statistics.**
----
 
 * **Default output:**
   ```sql
@@ -649,7 +745,15 @@ git log --stat
 ```bash
 git log --pretty=oneline
 ```
-Displays commit history **in a compact single-line format**.
+* Displays commit history **in a compact single-line format**.
+
+* **Example output:**
+  ```pgsql
+   9b2e3d7a Fixed login bug
+   4a7e8d9c Refactored authentication
+   8f00c6e4 Added password encryption
+  ```
+
 
 #### Custom Commit Formatting
 ```bash
@@ -660,17 +764,24 @@ git log --pretty=format:"%h - %an, %ar : %s"
 - `%ar` → Relative commit date
 - `%s` → Commit message
 
-Example Output:
-```
-9b2e3d7 - John Doe, 3 days ago : Fixed login bug
-4a7e8d9 - Alice Smith, 1 week ago : Refactored authentication
-```
+* **Example output:**
+  ```yaml
+   9b2e3d7 - John Doe, 3 days ago : Fixed login bug
+   4a7e8d9 - Alice Smith, 1 week ago : Refactored authentication
+  ```
 
 #### Visualizing Commit Graphs
 ```bash
 git log --pretty=format:"%h %s" --graph
 ```
-Displays a **graph representation** of commit history.
+* Displays commit history **as a graph** (branching visualization).
+
+* **Example output:**
+  ```markdown
+   * 9b2e3d7 Fixed login bug
+   * 4a7e8d9 Refactored authentication
+   * 8f00c6e Added password encryption
+  ```
 
 ---
 
@@ -680,19 +791,38 @@ Displays a **graph representation** of commit history.
 ```bash
 git log --since=2.weeks
 ```
-Shows commits from the last **two weeks**.
+* Shows commits from the last **two weeks**.
+
+* **Example usage:**
+  ```markdown
+  git log --since="2024-02-20"
+  ```
+* Useful for **reviewing recent changes.**
+
 
 #### Searching for Specific Changes
 ```bash
 git log -S function_name
 ```
-Finds commits where a **specific function or string was added or removed**.
+* Finds commits where a **specific function or string was added or removed**.
+
+* **Example:**
+  ```bash
+   git log -S "validate_login"
+  ```
+* Useful for **tracking down when a function was introduced or modified.**
+
 
 #### Filtering by File Path
 ```bash
 git log -- path/to/file
 ```
-Shows commit history for a specific file.
+* Shows commit history **for a specific file.**
+* **Example:**
+  ```bash
+   git log -- app/models/user.py
+  ```
+* Useful for **tracking changes to a particular file.**
 
 ---
 
@@ -706,11 +836,26 @@ git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
 - Filters commits **by author, date range, and file path**.
 - `--no-merges` excludes merge commits.
 
+* Explanation:
+   * `--pretty="%h - %s"` → Show hash and commit message.
+   * `--author='Junio C Hamano` → Filter by author.
+   * `--since="2008-10-01"` → Commits after October 1, 2008.
+   * `--before="2008-11-01"` → Commits before November 1, 2008.
+   * `--no-merges` → Exclude merge commits.
+   * `--t/` → Limit search to files in the t/ directory.
+
+* **Example output:**
+  ```bash
+   4a7e8d9 - Improved test coverage
+   8f00c6e - Fixed security vulnerability
+  ```
+
+
 #### Excluding Merge Commits
 ```bash
 git log --no-merges
 ```
-Lists commits **without showing merge commits**.
+* Lists commits **without showing merge commits**.
 
 ---
 
