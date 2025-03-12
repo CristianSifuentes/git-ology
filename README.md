@@ -40,14 +40,16 @@
     - [Object Format in Git](#object-format-in-git)
 13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
 14. [Advanced Git Internals: Reconstructing a Real Git Scenery](#advanced-git-internals-reconstructing-a-real-git-scenery)
-    - [Step 1: Write a Blob (File Content)](#step-1-write-a-blob-file-content)
-    - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
+    - [Step 1: Retrieving a File Manually (Plumbing Commands)](#step-1-retrieving-a-file-manually-plumbing-commands)
+    - [Step 2: Write a Blob (File Content)](#step-2-write-a-blob-file-content) 
+    - [Step 3: Understanding the First Commit in Git ](#step-3-understanding-the-first-commit-in-git) 
+    <!-- - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
     - [Step 3: Create a Commit](#step-3-create-a-commit)
     - [Step 4: Move `HEAD` to the Commit](#step-4-move-head-to-the-commit)
-15. [Retrieving and Inspecting Each Object](#retrieving-and-inspecting-each-object)
+    - [Retrieving and Inspecting Each Object](#retrieving-and-inspecting-each-object)
     - [(1) Checking the Commit Object](#1-checking-the-commit-object)
     - [(2) Examining the Tree Object](#2-examining-the-tree-object)
-    <!-- - [(3) Verifying the Blob Object](#3-verifying-the-blob-object) -->
+    - [(3) Verifying the Blob Object](#3-verifying-the-blob-object) -->
 16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
     - [Inspecting Git Tree and Commit Information](#inspecting-the-git-tree-git-ls-tree-head)
        - [Inspecting the Git Tree: `git ls-tree HEAD`](#inspecting-the-git-tree-git-ls-tree-head)
@@ -534,10 +536,12 @@ When creating a new Git repository and making the first commit, Git initializes 
 
 ```bash
 echo "Hello World" > hello.txt
+
 git add .
+
 git commit -m "First commit"
 
-[master (root-commit) 56172c3] First commit
+[master (root-commit) c7a78d3] First commit
  1 file changed, 1 insertion(+)
  create mode 100644 hello.txt
 
@@ -548,17 +552,18 @@ Output:
  56172c3d5042ca5ec65c34b5d1e91093ecee5648
 ```
 
-
 After committing, Git creates multiple objects inside `.git/objects/`, structured as follows:
 
 ```
 .git/objects
-├── 55
-│   └── 7db03de997c86a4a028e1ebd3a1ceb225be238  (Blob for "Hello World")
-├── 97
-│   └── b49d4c943e3715fe30f141cc6f27a8548cee0e  (Tree containing hello.txt)
-├── d1
-│   └── ee121d5fe96b891ac0cc695498f31c0a4a7664  (Commit object)
+├── 2b
+│   └── 929a919511b881a7643785c73a74c8e59db018  (Blob for "Hello World")
+├── 56
+│   └── 172c3d5042ca5ec65c34b5d1e91093ecee5648  (Blob for "Hello World")
+├── 8b
+│   └── 8483151bd62dcbf7de98ce2c56afcca33ac816  (Tree containing hello.txt)
+├── c7
+│   └── a78d35d46ef5bca39ac78e6b1661189a34ebd1  (Commit object)
 ```
 ### Step 6: Branches
 ### Step 7: Merge
