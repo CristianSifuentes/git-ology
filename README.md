@@ -20,9 +20,9 @@
 7. [SHA-1 Collision Resistance in Git](#sha-1-collision-resistance-in-git)
 8. [Summary: Why Git is a Content Manager](#summary-why-git-is-a-content-manager)
 9. [git hash-object: A Low-Level Command](#git-hash-object-a-low-level-command)
-    - [Understanding `git hash-object`](#understanding-git-hash-object)
-    - [Example 1: Running `hash-object` Outside a Git Repository](#example-1-running-hash-object-outside-a-git-repository)
-    - [Example 2: Running `hash-object` Inside a Git Repository](#example-2-running-hash-object-inside-a-git-repository)
+   - [Understanding `git hash-object`](#understanding-git-hash-object)
+   - [Example 1: Running `hash-object` Outside a Git Repository](#example-1-running-hash-object-outside-a-git-repository)
+   - [Example 2: Running `hash-object` Inside a Git Repository](#example-2-running-hash-object-inside-a-git-repository)
 10. [Understanding the `.git` Directory Structure](#understanding-the-git-directory-structure)
     - [Tree Structure of a Freshly Initialized Git Repository](#tree-structure-of-a-freshly-initialized-git-repository)
     - [Detailed Breakdown of `.git` Subdirectories](#detailed-breakdown-of-git-subdirectories)
@@ -38,20 +38,17 @@
 12. [Advanced Insights: What Happens Internally?](#advanced-insights-what-happens-internally)
     - [Compression and Storage](#compression-and-storage)
     - [Object Format in Git](#object-format-in-git)
-13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)   
+13. [Visualizing Git's Object Storage](#visualizing-gits-object-storage)  
 14. [Advanced Git Internals: Reconstructing a Real Git Scenery](#advanced-git-internals-reconstructing-a-real-git-scenery)
     - [Step 1: Retrieving a File Manually (Plumbing Commands)](#step-1-retrieving-a-file-manually-plumbing-commands)
     - [Step 2: Write a Blob (File Content)](#step-2-write-a-blob-file-content) 
     - [Step 3: Understanding the First Commit in Git ](#step-3-understanding-the-first-commit-in-git) 
-    <!-- - [Step 2: Write a Tree Object](#step-2-write-a-tree-object)
-    - [Step 3: Create a Commit](#step-3-create-a-commit)
-    - [Step 4: Move `HEAD` to the Commit](#step-4-move-head-to-the-commit)
-    - [Retrieving and Inspecting Each Object](#retrieving-and-inspecting-each-object)
-    - [(1) Checking the Commit Object](#1-checking-the-commit-object)
-    - [(2) Examining the Tree Object](#2-examining-the-tree-object)
-    - [(3) Verifying the Blob Object](#3-verifying-the-blob-object) -->
-16. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
-    - [Inspecting Git Tree and Commit Information](#inspecting-the-git-tree-git-ls-tree-head)
+    - [Step 4: Creating an Annotated Tag ](#step-4-creating-an-annotated-tag) 
+         - [What Happens Internally? ](#what-happens-internally) 
+         - [Inspecting the `.git/objects/` Directory](#inspecting-the-gitobjects-directory)
+         - [Retrieving the Tag Object with `cat-file`](#retrieving-the-tag-object-with-cat-file)
+15. [Advanced Commands for Exploring Git Internals](#advanced-commands-for-exploring-git-internals) 
+    - [Inspecting Git Tree and Commit Information](#inspecting-git-tree-and-commit-information)
        - [Inspecting the Git Tree: `git ls-tree HEAD`](#inspecting-the-git-tree-git-ls-tree-head)
             - [Understanding `git ls-tree`](#understanding-git-ls-tree)
             - [Example Usage](#example-usage)
@@ -63,6 +60,12 @@
             - [Understanding `git fsck`](#understanding-git-fsck)
             - [Example Usage](#example-usage-2)
        - [Conclusion](#conclusion)
+    - [Practical Use Cases of Tags](#practical-use-cases-of-tags)
+       - [Versioning Releases](#versioning-releases)
+       - [Listing All Tags](#listing-all-tags)
+       - [Checking Out a Tagged Version](#checking-out-a-tagged-version)
+       - [Deleting a Tag](#deleting-a-tag)
+       - [Sharing Tags](#sharing-tags)  
     - [Viewing Commit History](#viewing-commit-history)
        - [Basic Commit Log](#basic-commit-log)
        - [Viewing Patch Details](#viewing-patch-details)
@@ -79,7 +82,8 @@
        - [Filtering by Author and Date](#filtering-by-author-and-date)
        - [Excluding Merge Commits](#excluding-merge-commits)
     - [Summary](#summary)   
-17. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+16. [Key Takeaways for Software Engineers](#key-takeaways-for-software-engineers)
+
 
 ---
 
@@ -129,20 +133,21 @@ Git stores content as objects in the `.git/objects/` directory. These objects ar
 ```bash
 echo "Hello World" | git hash-object -w --stdin
 ```
-Output:
+**Output:**
+
 ```nginx
 557db03de997c86a4a028e1ebd3a1ceb225be238
 ```
 - This command **stores** "Hello World" inside `.git/objects/` and assigns it a **SHA-1 hash**. The `-w` flag writes the object into Git’s object database.
 - The blob **does not track filenames**, only raw content. The object is now stored inside `.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238`.
 
-### To retrieve the content, use:
+**To retrieve the content, use:**
 
 ```bash
 git cat-file -p 557db03de997c86a4a028e1ebd3a1ceb225be238
 ```
 
-### Output:
+**Output**
 
 ```nginx
 Hello World
@@ -169,10 +174,12 @@ Git ensures data integrity using SHA-1 hashing, immutability, object compression
     ```
 
 ### Example: Checking an Object's Type
+
 ```bash
 git cat-file -t <hash>
 ```
-### Output:
+
+**Output:**
 
 ```nginx
 blob
@@ -203,20 +210,25 @@ Git provides **two levels of commands**:
 ---
 
 ## How Git Uses SHA-1 for Commit History
+
 A **Git commit** is essentially a SHA-1 hash that represents the project state at a specific time. The commit includes a tree (file structure), parent commit(s), and metadata.
 
-Example:
+**Example:**
+
 ```bash
 git log --pretty=raw
 ```
-Output:
-```
+
+**Output:**
+
+```bash
 commit 9fceb02b21337d3025f69e22f68c82d20a000000
 tree 36b74b3b8f6a...
 parent cf23df2207d9...
 author John Doe <johndoe@example.com>
 committer John Doe <johndoe@example.com>
 ```
+
 - **Commit SHA-1**: Identifies the commit.
 - **Tree SHA-1**: Represents the directory structure.
 - **Parent SHA-1**: Tracks commit history.
@@ -230,6 +242,7 @@ committer John Doe <johndoe@example.com>
 -  **Git content structure**: Even if a SHA-1 collision were found, Git’s reliance on tree structures and commit history prevents serious exploits.
 
 ---
+
 
 ## Summary: Why Git is a Content Manager
 - **Git stores and retrieves data based on SHA-1 hashes**,  acting as a key-value content store.
@@ -246,18 +259,21 @@ committer John Doe <johndoe@example.com>
 ### Understanding `git hash-object`
 Git's `hash-object` command computes a **SHA-1 hash** for given content, allowing it to be stored in Git’s object database. It is a **plumbing command**, meaning it operates at a low level and does not track files.
 
-### Key Properties:
+**Key Properties:**
+
 - **Can be used outside of a Git repository.**
 - **Idempotent:** Given the same input, it will always return the same SHA-1 hash.
 - Supports **writing data to Git’s object store** (`-w` flag).
 - Stores objects in compressed format (`zlib`).
 
-
 ### Example 1: Running `hash-object` Outside a Git Repository
+
 ```bash
 echo "Hello Git" | git hash-object --stdin
 ```
-Output:
+
+**Output:**
+
 ```nginx
 8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
 ```
@@ -299,6 +315,7 @@ Output:
 When a Git repository is initialized (git init), a .git directory is created to manage version history and metadata.
 
 ### Tree Structure of a Freshly Initialized Git Repository
+
 ```
 .git
 ├── HEAD
@@ -323,6 +340,7 @@ When a Git repository is initialized (git init), a .git directory is created to 
 ```
 
 ### Detailed Breakdown of `.git` Subdirectories
+
 | Directory | Purpose |
 |-----------|---------|
 | `HEAD` | Stores reference to the current branch. |
@@ -333,6 +351,7 @@ When a Git repository is initialized (git init), a .git directory is created to 
 | `info/` | Contains exclude, which defines ignored files (similar to .gitignore). |
 | `objects/` | Contains all Git objects (blobs, trees, commits, tags). |
 | `refs/` | Stores branch (`heads/`) and tag (`tags/`) references. |
+
 ---
 
 ## The Importance of the `objects/` Directory
@@ -340,6 +359,7 @@ When a Git repository is initialized (git init), a .git directory is created to 
 The `objects/` folder is the heart of Git’s key-value store, containing all historical content as hashed objects.
 
 ### Structure of `.git/objects/`
+
 ```
 .git/objects
 ├── info
@@ -355,12 +375,13 @@ The `objects/` folder is the heart of Git’s key-value store, containing all hi
   - **Remaining 38 characters** → File name `(7db03de997c86a4a028e1ebd3a1ceb225be238)`.
 - This prevents **large numbers of files in a single directory**.
 
+
 ### Why This Structure?
   - **Speeds up lookups:** By reducing the number of files per directory.
   - **Ensures unique content:** The same content always produces the same hash, preventing duplicate storage.
   - **Supports distributed versioning:** Each object is self-contained and immutable.
 
-### Types of Objects Stored in `objects/`
+## Types of Objects Stored in `objects/`
 Git stores four object types, all identified by SHA-1 hashes:
 
 
@@ -371,11 +392,13 @@ Git stores four object types, all identified by SHA-1 hashes:
 | **Commit** | Points to a tree object and includes metadata (author, message, parent commit, etc.). |
 | **Tag** | Stores tag data and references commits (annotated tags).|
 
-### Example: Storing and Retrieving a File Manually
+## Example: Storing and Retrieving a File Manually
+
 ```bash
 echo "Hello Git Internals!" | git hash-object -w --stdin
 ```
-Output:
+
+**Output:**
 ```nginx
 8cf2d8a03c123f8824ac46aa20a6b924ad44f0c8
 ```
@@ -384,18 +407,19 @@ Now, retrieve the content:
 ```bash
 git cat-file -p <hash>
 ```
-Output:
+
+**Output:**
 ```nginx
 Hello, Git Internals!
 ```
----
+
 ## Retrieving Stored Objects (`cat-file`)
 Since the object is now in  `.git/objects/`, we can inspect its content using:
 
 ```bash
 git cat-file -p 557db03de997c86a4a028e1ebd3a1ceb225be238
 ```
-Output:
+**Output:**
 ```nginx
 Hello World
 ```
@@ -404,7 +428,7 @@ Git allows us to reference objects with shortened hashes, provided they are uniq
 ```bash
 git cat-file -p 557db03
 ```
-Output:
+**Output:**
 ```nginx
 Hello World
 ```
@@ -428,14 +452,13 @@ Hello World
 
 ### Object Format in Git
 A stored object follows the format:
-```
+```bash
 <type> <size>\0<content>
 ```
-For `"Hello World"`:
-```
+**For `"Hello World"`:**
+```bash
 blob 11\0Hello World
 ```
-
 
 * `blob` → Object type.
 * `11` → Number of bytes in `"Hello World"`.
@@ -448,7 +471,7 @@ Using **`ls`**, we can see how objects are structured:
 ```bash
 ls -R .git/objects/
 ```
-Example output:
+**Example output:**
 ```
 .git
 ├── HEAD  (Pointer to the current branch)
@@ -463,6 +486,7 @@ Example output:
 
 ```
 
+
 ---
 
 ## Advanced Git Internals: Reconstructing a Real Git Scenery
@@ -472,31 +496,29 @@ Example output:
 ```bash
 echo "Hello World" | git hash-object --stdin
 ```
-* **Output:**
-   ```nginx
+**Output:**
+  ```nginx
    2b929a919511b881a7643785c73a74c8e59db018
-   ```
+  ```
 
-* **Checking an Object's Type**
-   ```bash
+**Checking an Object's Type**
+  ```bash
    git cat-file -t 2b929a919511b881a7643785c73a74c8e59db018
-   ```
-* **Output:**
-   ```nginx
+  ```
+**Output:**
+  ```nginx
    blob
-   ```
+  ```
 
-* **Now, retrieve the content:**
-   ```bash
+**Now, retrieve the content:**
+  ```bash
    git cat-file -p 2b929a919511b881a7643785c73a74c8e59db018
-   ```
+  ```
 
-* **Output:**
-   ```nginx
+**Output:**
+  ```nginx
    Hello World
-   ```
-
-
+  ```
 
 ### Step 2: Write a Blob (File Content)
 
@@ -504,34 +526,31 @@ echo "Hello World" | git hash-object --stdin
  echo "Hello World" | git hash-object -w --stdin
 ```
 
-* **Output:**
-   ```nginx
-   56172c3d5042ca5ec65c34b5d1e91093ecee5648
+**Output:**
+  ```nginx
+  56172c3d5042ca5ec65c34b5d1e91093ecee5648
    ```
 
-* **Checking an Object's Type**
-   ```bash
+**Checking an Object's Type**
+  ```bash
    git cat-file -t 56172c3d5042ca5ec65c34b5d1e91093ecee5648
-   ```
-* **Output:**
-   ```nginx
+  ```
+**Output:**
+  ```nginx
    blob
-   ```
+  ```
 
-* **Now, retrieve the content:**
-   ```bash
+**Now, retrieve the content:**
+  ```bash
    git cat-file -p 56172c3d5042ca5ec65c34b5d1e91093ecee5648
-   ```
+  ```
 
-* **Output:**
-   ```nginx
+**Output:**
+  ```nginx
     Hello World
-   ```
+  ```
 
-
-
-
-## Step 3: Understanding the First Commit in Git
+### Step 3: Understanding the First Commit in Git
 When creating a new Git repository and making the first commit, Git initializes its **object database** with a structured reference to **blobs (files), trees (directories), and commits (history).**
 
 ```bash
@@ -547,7 +566,7 @@ git commit -m "First commit"
 
 ```
 
-Output:
+**Output:**
 ```nginx
  56172c3d5042ca5ec65c34b5d1e91093ecee5648
 ```
@@ -565,126 +584,120 @@ After committing, Git creates multiple objects inside `.git/objects/`, structure
 ├── c7
 │   └── a78d35d46ef5bca39ac78e6b1661189a34ebd1  (Commit object)
 ```
-### Step 6: Branches
-### Step 7: Merge
-### Step 8: Recursive
-### Step 9: Rebase
-### Step 10: Conflict resolution
 
-Synchronizing with the remote repository
-
-Scenario 1
-
-Scenario 2
-
-Scenario 3: the same, but with conflicts
-
-Conclusions
+Let's use the git log command to find out the hash key associated with the commit:
 
 
----
-
-### Step 2: Write a Tree Object
 ```bash
-git update-index --add --cacheinfo 100644 557db03de997c86a4a028e1ebd3a1ceb225be238 hello.txt
-git write-tree
+git log -1
+commit c7a78d35d46ef5bca39ac78e6b1661189a34ebd1
+Author: Author <xxxxxx@gmail.com>
+Date:   Sun Jan 22 18:50:55 2017 +0000
+
+    First commit
 
 ```
-Output:
-```nginx
- 9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6
-```
 
-* The tree object represents a directory structure and references blob objects.
+The simplified hash key for the commit is d1ee121. Let's see what we get with cat-file, just like we did with the blob:
 
-### Step 3: Create a Commit
-```bash
- echo "Initial commit" | git commit-tree 9a3e5b4d8a6c7f12e6aef3c1b2e5c4d1a9a8c7e6 -m "Initial commit"
-```
-Output:
-```nginx
- d2f3a5e4b6c2a1e7d8c9b0e2f3a7c6d5e4b3a2e1
-```
-* This manually creates a commit object!
-
-
-### Step 4: Move `HEAD` to the Commit
-```bash
-git branch -f main d1ee121
-git checkout main
-```
-* Now the repository **has a valid commit history!**
-
----
-
-
-
-
-### Step 4: Tags
-### Step 5: Create a Second commit
-
-## Retrieving and Inspecting Each Object
-
-### (1) Checking the Commit Object
 ```bash
 git cat-file -t d1ee121
-```
-Output:
-```
 commit
-```
 
-```bash
-git cat-file -p d1ee121
-```
-Output:
-```
+$ git cat-file -p d1ee121
 tree 97b49d4c943e3715fe30f141cc6f27a8548cee0e
-author John Doe <johndoe@example.com> 1485111055 +0000
-committer John Doe <johndoe@example.com> 1485111055 +0000
+author RaulAvila <xxxxxx@gmail.com> 1485111055 +0000
+committer RaulAvila <xxxxxx@gmail.com> 1485111055 +0000
 
 First commit
+
 ```
 
-### (2) Examining the Tree Object
-```bash
-git cat-file -t 97b49d4
-```
-Output:
-```
-tree
-```
+
+### Step 4: Creating an Annotated Tag
+
+#### What Happens Internally?
+
+Git allows you to create **tags** to mark specific commits. When an **annotated tag** is created, Git:
+- Generates a **new object in `.git/objects/`**.
+- Associates the tag with a specific commit.
+- Stores metadata such as **author, date, and message**.
+
+#### Inspecting the `.git/objects/` Directory
+
+After tagging, a new entry appears inside `.git/objects/`, representing the tag.
 
 ```bash
-git cat-file -p 97b49d4
-```
-Output:
-```
-100644 blob 557db03de997c86a4a028e1ebd3a1ceb225be238 hello.txt
+ ls .git/objects/
 ```
 
-<!-- ### (3) Verifying the Blob Object
-```bash
-git cat-file -t 557db03
-```
-Output:
-```
-blob
-```
+Example output:
 
 ```bash
-git cat-file -p 557db03
+.git/objects
+├── 04
+│   └── 50100369ff9e0b980dfc6ae42aaeb1de6890f6  (Tag object)
+├── 55
+│   └── 7db03de997c86a4a028e1ebd3a1ceb225be238  (Blob: "Hello World")
+...
+
+```
+
+The tag is stored as an **object with a unique SHA-1 hash.**
+
+#### Retrieving the Tag Object with `cat-file`
+
+**Checking the Object Type**
+
+```bash
+git cat-file -t 0450100
 ```
 Output:
+
+```nginx
+tag
 ```
-Hello World
-``` -->
+This confirms that the **0450100** object is a tag.
+
+**Inspecting the Tag Contents**
+
+```bash
+git cat-file -p 0450100
+```
+Output:
+
+```sql
+object d1ee121d5fe96b891ac0cc695498f31c0a4a7664
+type commit
+tag first
+tagger John Doe <johndoe@example.com> 1685112874 +0000
+
+First Commit
+
+```
+
+**Analysis of the Output**
+
+* `object d1ee121...` → Points to the commit.
+* `type commit` → Confirms it is associated with a commit.
+* `tag first` → Name of the tag.
+* `tagger John Doe` → The person who created the tag.
+* `First Commit` → The message added to the tag.
+
+
+
+
+
 
 ---
 
-## Inspecting the Git Tree: `git ls-tree HEAD`
+## Advanced Commands for Exploring Git Internals
 
-### **Understanding `git ls-tree`**
+### Inspecting Git Tree and Commit Information
+
+#### Inspecting the Git Tree: `git ls-tree HEAD`
+
+##### **Understanding `git ls-tree`**
 - `git ls-tree` displays **the contents of a tree object**.
 - `HEAD` refers to the **current commit**, so `git ls-tree HEAD` lists files in the latest commit.
 - The output includes:
@@ -693,12 +706,14 @@ Hello World
   - **SHA-1 hash** of each object.
   - **File or directory name**.
 
-### **Example Usage**
+##### **Example Usage**
 ```bash
 git ls-tree HEAD
 ```
-### **Interpreting the Output**
-Example output:
+
+##### **Interpreting the Output**
+
+##### Example output
 
 ```bash
 100644 blob a4c2e3e file1.txt
@@ -706,18 +721,25 @@ Example output:
 040000 tree 3f5e2a7 src
 
 ```
-## Retrieving Commit Hash: `git rev-parse HEAD`
 
-**Understanding** `git rev-parse`
+
+
+
+
+#### Retrieving Commit Hash: `git rev-parse HEAD`
+
+##### Understanding `git rev-parse`
+
 * `git rev-parse HEAD` returns the **full commit hash** of the latest commit.
 * Useful for **scripting, automation, and debugging.**
 
-**Example Usage**
+##### Example Usage
+
 ```bash
 git rev-parse HEAD
 ```
 
-**Example output:**
+##### Example output
 
 ```bash
 9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
@@ -727,14 +749,15 @@ This hash uniquely identifies the **latest commit** in the current branch.
 
 
 
-## Verifying Repository Integrity: `git fsck --full`
+#### Verifying Repository Integrity: `git fsck --full`
 
-**Understanding** `git fsck`
+##### Understanding `git fsck`
+
 * `git fsck` checks the **validity of Git objects.**
 * `--full` performs a **deep integrity check.**
 * Identifies **corrupt objects, missing references, or structural issues.**
 
-**Example Usage**
+##### Example Usage
 
 ```bash
 git fsck --full
@@ -748,7 +771,7 @@ Checking object directories: 100% (256/256), done.
 Checking objects: 100% (1500/1500), done.
 ```
 
-If corruption exists:
+**If corruption exists:**
 
 ```vbnet
 error: missing blob 8f00c6e4
@@ -758,7 +781,8 @@ fatal: object 8f00c6e4 missing
 * This indicates that an object is missing and might need **recovery from a remote repository.**
 
 
-## Conclusion
+
+#### Conclusion
 
 These **low-level Git commands** are essential for **inspecting, debugging, and verifying repositories:**
 
@@ -768,17 +792,45 @@ These **low-level Git commands** are essential for **inspecting, debugging, and 
 | `git rev-parse HEAD` | Retrieves the latest commit hash. |
 | `git fsck --full` | 	Checks repository integrity and detects corruption.|
 
-## Advanced Commands for Exploring Git Internals
+
+---
+
+### Practical Use Cases of Tags
+
+
+#### Versioning Releases
+```bash
+git tag -a v1.0 -m "Version 1.0 release"
+```
+#### Listing All Tags
+```bash
+git tag
+```
+#### Checking Out a Tagged Version
+```bash
+git checkout v1.0
+```
+#### Deleting a Tag
+```bash
+git tag -d first
+```
+### Sharing Tags
+```bash
+git push --tags
+```
+---
 
 ### Viewing Commit History
 
+
 #### Basic Commit Log
+
 ```bash
 git log
 ```
 * Displays commit history **with details such as author, date, and commit message.**
 
-* **Default output:**
+**Default output:**
   ```sql
    commit 9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
    Author: John Doe <johndoe@example.com>
@@ -789,12 +841,13 @@ git log
   ```
 
 #### Viewing Patch Details
+
 ```bash
 git log -p -2
 ```
 * Shows **patch details** (actual code changes) for the last **two** commits.
 
-* **Default output:**
+**Default output:**
   ```sql
    commit 4a7e8d9c6a...
    Author: Alice Smith
@@ -818,7 +871,7 @@ git log --stat
 ```
 * Displays commit history **with file-level change statistics.**
 
-* **Default output:**
+**Default output:**
   ```sql
    commit 9b2e3d7a8f00c6e4f88d70a9c2e7fcbf97e6c9c5
    Author: John Doe <johndoe@example.com>
@@ -831,6 +884,8 @@ git log --stat
    2 files changed, 3 insertions(+), 2 deletions(-)
 
   ```
+
+
 
 ### Customizing Git Log Output
 
@@ -878,20 +933,21 @@ git log --pretty=format:"%h %s" --graph
 
 ---
 
+
 ### Filtering Commit History
 
 #### Filtering by Date
+
 ```bash
 git log --since=2.weeks
 ```
 * Shows commits from the last **two weeks**.
 
-* **Example usage:**
+**Example usage:**
   ```markdown
   git log --since="2024-02-20"
   ```
 * Useful for **reviewing recent changes.**
-
 
 #### Searching for Specific Changes
 ```bash
@@ -899,25 +955,24 @@ git log -S function_name
 ```
 * Finds commits where a **specific function or string was added or removed**.
 
-* **Example:**
+**Example:**
   ```bash
    git log -S "validate_login"
   ```
 * Useful for **tracking down when a function was introduced or modified.**
-
 
 #### Filtering by File Path
 ```bash
 git log -- path/to/file
 ```
 * Shows commit history **for a specific file.**
-* **Example:**
+* 
+**Example:**
   ```bash
    git log -- app/models/user.py
   ```
 * Useful for **tracking changes to a particular file.**
 
----
 
 ### Advanced Filtering & Searching
 
@@ -929,7 +984,7 @@ git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
 - Filters commits **by author, date range, and file path**.
 - `--no-merges` excludes merge commits.
 
-* Explanation:
+**Explanation:**
    * `--pretty="%h - %s"` → Show hash and commit message.
    * `--author='Junio C Hamano` → Filter by author.
    * `--since="2008-10-01"` → Commits after October 1, 2008.
@@ -937,7 +992,7 @@ git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
    * `--no-merges` → Exclude merge commits.
    * `--t/` → Limit search to files in the t/ directory.
 
-* **Example output:**
+**Example output:**
   ```bash
    4a7e8d9 - Improved test coverage
    8f00c6e - Fixed security vulnerability
@@ -952,7 +1007,9 @@ git log --no-merges
 
 ---
 
+
 ### Summary
+
 
 | **Command** | **Description** |
 |-------------|---------------|
@@ -967,33 +1024,6 @@ git log --no-merges
 | `git log -- path/to/file` | Shows commit history for a specific file. |
 | `git log --pretty="%h - %s" --author='...' --since="..." --before="..." --no-merges -- t/` | Filters commits by author, date, and file path. |
 
----
-
-<!-- ```bash
-git ls-tree HEAD  # List tree structure
-```
-
-```bash
-git rev-parse HEAD  # Show latest commit hash
-```
-
-```bash
-git fsck --full  # Verify Git object database
-```
-
-```bash
-git log
-git log -p -2
-git log --stat
-git log --pretty=oneline
-git log --pretty=format:"%h - %an, %ar : %s"
-git log --pretty=format:"%h %s" --graph
-git log --since=2.weeks
-git log -S function_name
-git log -- path/to/file
-git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
-   --before="2008-11-01" --no-merges -- t/
-``` -->
 
 ---
 
@@ -1014,4 +1044,5 @@ git log --pretty="%h - %s" --author='Junio C Hamano' --since="2008-10-01" \
 - **Understanding SHA-1 hashing helps in debugging and optimizing Git workflows.**
 
 ---
+
 
